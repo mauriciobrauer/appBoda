@@ -302,6 +302,61 @@
 
     <!-- Main JavaScript -->
     <script src="app.js"></script>
+
+    <!-- DEBUG CONSOLE (Temporary) -->
+    <div id="debugConsole"
+        style="position:fixed; bottom:80px; left:0; right:0; height:150px; background:rgba(0,0,0,0.8); color:#0f0; font-family:monospace; font-size:10px; overflow-y:scroll; z-index:99999; padding:5px; pointer-events:none; border-top: 2px solid red;">
+        <div>--- DEBUG LOG START ---</div>
+    </div>
+    <script>
+        (function () {
+            const consoleDiv = document.getElementById('debugConsole');
+            function log(msg) {
+                const line = document.createElement('div');
+                line.textContent = msg;
+                consoleDiv.appendChild(line);
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+
+            // Capture logs
+            const oldLog = console.log;
+            console.log = function (...args) {
+                oldLog.apply(console, args);
+                log('LOG: ' + args.join(' '));
+            };
+
+            const oldError = console.error;
+            console.error = function (...args) {
+                oldError.apply(console, args);
+                log('ERR: ' + args.join(' '));
+                line.style.color = 'red';
+            };
+
+            // Log CSS Info
+            window.addEventListener('load', () => {
+                log('UA: ' + navigator.userAgent);
+                const bg = document.querySelector('.fixed-background');
+                if (bg) {
+                    const style = window.getComputedStyle(bg);
+                    log('FixBG found: Yes');
+                    log('BG Z-Index: ' + style.zIndex);
+                    log('BG Color: ' + style.backgroundColor);
+                    log('BG Image: ' + style.backgroundImage);
+                    log('BG Size: ' + bg.offsetWidth + 'x' + bg.offsetHeight);
+                    log('Window Size: ' + window.innerWidth + 'x' + window.innerHeight);
+                } else {
+                    log('ERR: .fixed-background NOT FOUND');
+                }
+
+                const htmlStyle = window.getComputedStyle(document.documentElement);
+                log('HTML BG: ' + htmlStyle.backgroundColor);
+            });
+
+            window.onerror = function (msg, url, line) {
+                log('Global Err: ' + msg + ' line ' + line);
+            };
+        })();
+    </script>
 </body>
 
 </html>

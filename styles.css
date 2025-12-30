@@ -96,11 +96,16 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 100vh;
+    /* Changed to 100vh specifically */
     z-index: -9999;
+    background-color: #1A0F2E;
+    /* Solid color fallback */
     background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 50%, #2A1548 100%);
     pointer-events: none;
     /* Let clicks pass through */
+    -webkit-transform: translate3d(0, 0, 0);
+    /* Force Hardware Acceleration */
 }
 
 /* Fix Buttons on iOS */
