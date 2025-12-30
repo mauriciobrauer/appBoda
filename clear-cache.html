@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Limpieza de Caché</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: #E91E63;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        button:hover {
+            background: #c2185b;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #e3f2fd;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>🔧 Limpieza de Caché - App Boda</h1>
+        <p>Haz clic en el botón para limpiar completamente el caché:</p>
+
+        <button onclick="clearEverything()">✨ Limpiar Todo y Recargar</button>
+
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function clearEverything() {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.innerHTML = 'Limpiando...';
+
+            try {
+                // Unregister all service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+                status.innerHTML += '<br>✅ Service Workers eliminados';
+
+                // Clear all caches
+                const cacheNames = await caches.keys();
+                for (let cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                }
+                status.innerHTML += '<br>✅ Caché eliminado';
+
+                // Clear localStorage
+                localStorage.clear();
+                status.innerHTML += '<br>✅ LocalStorage limpiado';
+
+                status.innerHTML += '<br><br><strong>🎉 ¡Todo limpio! Redirigiendo...</strong>';
+
+                // Redirect to main app
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                status.innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+
+</html>

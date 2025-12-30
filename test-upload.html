@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cloudinary Upload</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f1ff;
+        }
+
+        .upload-area.dragging {
+            border-color: #764ba2;
+            background: #e8e9ff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎉 Prueba de Subida - Boda</h1>
+
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 48px; margin: 0;">📸</p>
+            <p style="margin: 10px 0; color: #667eea; font-weight: bold;">
+                Arrastra una imagen aquí o haz clic para seleccionar
+            </p>
+            <p style="font-size: 12px; color: #999;">
+                Formatos: JPG, PNG, GIF
+            </p>
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*" multiple>
+
+        <div class="file-info" id="fileInfo"></div>
+
+        <button id="uploadBtn" style="display: none;">Subir Fotos</button>
+
+        <div id="status"></div>
+
+        <div class="preview" id="preview"></div>
+    </div>
+
+    <script>
+        // ✅ CONFIGURACIÓN COMPLETADA
+        const CLOUD_NAME = 'dmhlpqryp';
+        const UPLOAD_PRESET = 'Wedding';
+        const FOLDER = 'cdb5f9314f082dad2bbb1b92e37a9a36f5';
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
+        const preview = document.getElementById('preview');
+        const fileInfo = document.getElementById('fileInfo');
+
+        let selectedFiles = [];
+
+        // Click para seleccionar archivos
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Prevenir comportamiento por defecto del drag & drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight al arrastrar
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragging');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragging');
+            }, false);
+        });
+
+        // Drop
+        uploadArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        }, false);
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+            if (selectedFiles.length === 0) {
+                showStatus('Por favor selecciona al menos una imagen', 'error');
+                return;
+            }
+
+            fileInfo.innerHTML = `
+                <strong>${selectedFiles.length}</strong> imagen(es) seleccionada(s):
+                ${selectedFiles.map(f => f.name).join(', ')}
+            `;
+
+            uploadBtn.style.display = 'block';
+            showPreview(selectedFiles[0]);
+        }
+
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            if (UPLOAD_PRESET === 'TU_UPLOAD_PRESET_AQUI') {
+                showStatus('⚠️ Error: Debes configurar el UPLOAD_PRESET en el código', 'error');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            showStatus('Subiendo... ⏳', 'info');
+
+            try {
+                const results = await Promise.all(
+                    selectedFiles.map(file => uploadToCloudinary(file))
+                );
+
+                showStatus(`✅ ¡Éxito! ${results.length} imagen(es) subida(s) correctamente`, 'success');
+
+                console.log('URLs de las imágenes:', results);
+
+                // Mostrar la primera imagen subida
+                if (results.length > 0) {
+                    preview.innerHTML = `
+                        <h3>Imagen subida exitosamente:</h3>
+                        <img src="${results[0].url}" alt="Uploaded">
+                        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                            <a href="${results[0].url}" target="_blank">Ver en Cloudinary</a>
+                        </p>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Error completo:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            formData.append('folder', FOLDER);
+
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error de Cloudinary:', errorData);
+                throw new Error(errorData.error?.message || 'Error al subir la imagen');
+            }
+
+            return await response.json();
+        }
+
+        function showStatus(message, type) {
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+    </script>
+</body>
+
+</html>

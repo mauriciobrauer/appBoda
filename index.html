@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Boda - Comparte tus fotos y mensajes en tiempo real">
+    <title>Nuestra Boda 💍 - Galería Compartida</title>
+
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Nuestra Boda - Galería Compartida">
+    <meta property="og:description" content="Comparte tus fotos y mensajes del evento">
+    <meta property="og:type" content="website">
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <div class="loading-text">Subiendo...</div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Home Screen -->
+    <div id="homeScreen" class="section">
+        <div class="container">
+            <header class="header">
+                <div class="header-icon">💍</div>
+                <h1 id="coupleNames">María & Carlos</h1>
+                <div class="subtitle">Bienvenidos a nuestra boda</div>
+                <div class="date" id="weddingDate">29 de Diciembre, 2025</div>
+            </header>
+
+            <div class="grid-2" style="grid-template-columns: 1fr;">
+                <div class="card" onclick="navigateTo('upload')">
+                    <h2 style="margin-bottom: 1rem; font-size: 1.8rem;">📸 Sube tu foto</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Comparte los momentos especiales de este día inolvidable
+                    </p>
+                    <button class="btn btn-primary">
+                        Subir Foto o Video
+                    </button>
+                </div>
+
+                <div class="card" onclick="navigateTo('gallery')">
+                    <h2 style="margin-bottom: 1rem; font-size: 1.8rem;">🎉 Ver fotos de todos</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Explora la galería compartida del evento
+                    </p>
+                    <button class="btn btn-secondary">
+                        Ver Galería
+                    </button>
+                </div>
+
+                <div class="card" onclick="navigateTo('messages')">
+                    <h2 style="margin-bottom: 1rem; font-size: 1.8rem;">💌 Muro de mensajes</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Lee los mensajes de amor y buenos deseos
+                    </p>
+                    <button class="btn btn-secondary">
+                        Ver Mensajes
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    ❤️ Gracias por compartir este momento con nosotros
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Screen -->
+    <div id="uploadScreen" class="section hidden">
+        <div class="container">
+            <button onclick="navigateTo('home')" class="back-button">
+                ← Volver
+            </button>
+            <header class="header">
+                <h1>📸 Sube tu foto o video</h1>
+                <div class="subtitle">Comparte los momentos especiales</div>
+            </header>
+
+            <form id="uploadForm" class="upload-form">
+                <div class="form-group">
+                    <label for="uploaderName">Tu nombre</label>
+                    <input type="text" id="uploaderName" class="form-input" placeholder="¿Cómo te llamas?" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Selecciona fotos o videos</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+                        <label for="fileInput" class="file-input-label">
+                            <span style="font-size: 3rem;">📁</span>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 0.5rem;">
+                                    Toca para seleccionar archivos
+                                </div>
+                                <div style="font-size: 0.9rem; color: var(--text-muted);">
+                                    Fotos o videos desde tu cámara o galería
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="filePreview" class="file-preview"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    ✨ Subir archivos
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Gallery Screen -->
+    <div id="galleryScreen" class="section hidden">
+        <div class="container">
+            <button onclick="navigateTo('home')" class="back-button">
+                ← Volver
+            </button>
+            <header class="header">
+                <h1>🎉 Galería compartida</h1>
+                <div class="subtitle">Todos los momentos del evento</div>
+            </header>
+
+            <!-- Filter Dropdowns -->
+            <div id="galleryFilters" class="gallery-filters">
+                <!-- Filters will be rendered here dynamically -->
+            </div>
+
+            <!-- Photo Grid -->
+            <div id="photoGrid" class="grid-photos">
+                <!-- Photos will be loaded here dynamically -->
+                <div class="text-center" style="grid-column: 1/-1; padding: 3rem; color: var(--text-muted);">
+                    <p style="font-size: 3rem; margin-bottom: 1rem;">📷</p>
+                    <p>Aún no hay fotos. ¡Sé el primero en compartir!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Screen -->
+    <div id="galleryScreen" class="section hidden">
+        <div class="container">
+            <button onclick="navigateTo('home')" class="back-button">
+                ← Volver
+            </button>
+            <header class="header">
+                <h1>🎉 Galería compartida</h1>
+                <div class="subtitle">Todos los momentos del evento</div>
+            </header>
+
+            <!-- Filter Dropdowns -->
+            <div id="galleryFilters" class="gallery-filters">
+                <!-- Filters will be rendered here dynamically -->
+            </div>
+
+            <!-- Photo Grid -->
+            <div id="photoGrid" class="grid-photos">
+                <!-- Photos will be loaded here dynamically -->
+                <div class="text-center" style="grid-column: 1/-1; padding: 3rem; color: var(--text-muted);">
+                    <p style="font-size: 3rem; margin-bottom: 1rem;">📷</p>
+                    <p>Aún no hay fotos. ¡Sé el primero en compartir!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Screen -->
+    <div id="messagesScreen" class="section hidden">
+        <div class="container">
+            <button onclick="navigateTo('home')" class="back-button">
+                ← Volver
+            </button>
+            <header class="header">
+                <h1>💌 Muro de mensajes</h1>
+                <div class="subtitle">Recuerdos Inolvidables</div>
+            </header>
+
+            <!-- Write Message Button -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <button onclick="navigateTo('writeMessage')" class="btn btn-primary"
+                    style="padding: 1rem 2rem; font-size: 1.1rem;">
+                    ✍️ Firmar muro
+                </button>
+            </div>
+
+            <div id="messagesContainer">
+                <!-- Messages will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Write Message Screen -->
+    <div id="writeMessageScreen" class="section hidden">
+        <div class="container">
+            <button onclick="navigateTo('messages')" class="back-button">
+                ← Volver
+            </button>
+            <header class="header">
+                <h1>✍️ Firmar el muro</h1>
+                <div class="subtitle">Comparte tus buenos deseos</div>
+            </header>
+
+            <form id="messageForm" class="upload-form">
+                <div class="form-group">
+                    <label for="messageName">Tu nombre</label>
+                    <input type="text" id="messageName" class="form-input" placeholder="¿Cómo te llamas?" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="messageText">Tu mensaje</label>
+                    <textarea id="messageText" class="form-textarea"
+                        placeholder="Escribe tus felicitaciones para los novios..." required
+                        style="min-height: 150px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Agregar foto (opcional)</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="messageFileInput" accept="image/*,video/*">
+                        <label for="messageFileInput" class="file-input-label">
+                            <span style="font-size: 2rem;">📷</span>
+                            <div style="font-size: 0.9rem;">
+                                Agregar una foto o video (opcional)
+                            </div>
+                        </label>
+                    </div>
+                    <div id="messageFilePreview" class="file-preview"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    💌 Enviar mensaje
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Photo Modal -->
+    <div id="photoModal" class="modal hidden" onclick="closePhotoModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="modalUploaderName"></div>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;" id="modalTimestamp"></div>
+                </div>
+                <button class="modal-close" onclick="closePhotoModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalMediaContainer"></div>
+                <p id="modalCaption" style="margin-top: 1rem; color: var(--text-secondary);"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed-bottom-nav">
+        <div class="nav-container">
+            <a href="#" class="nav-item active" onclick="navigateTo('home'); return false;">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navigateTo('upload'); return false;">
+                <span class="nav-icon">📸</span>
+                <span class="nav-label">Subir</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navigateTo('gallery'); return false;">
+                <span class="nav-icon">🎉</span>
+                <span class="nav-label">Galería</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navigateTo('messages'); return false;">
+                <span class="nav-icon">💌</span>
+                <span class="nav-label">Mensajes</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main JavaScript -->
+    <script src="app.js"></script>
+</body>
+
+</html>

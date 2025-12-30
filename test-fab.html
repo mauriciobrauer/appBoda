@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test FAB</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1A0F2E 0%, #2A1548 100%);
+            min-height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .fab-test {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            min-width: 180px;
+            height: 56px;
+            padding: 0 1.5rem;
+            border-radius: 28px;
+            background: linear-gradient(135deg, #E91E63, #FF4081);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .content {
+            padding: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <h1>Test de Botón Flotante</h1>
+        <p>Si ves un botón rosa en la esquina inferior derecha que dice "✍️ Firmar muro", entonces el CSS funciona.</p>
+        <p>Si NO lo ves, hay un problema con el navegador o la configuración.</p>
+    </div>
+
+    <button class="fab-test" onclick="alert('¡Funciona!')">
+        ✍️ Firmar muro
+    </button>
+
+    <script>
+        console.log('Botón FAB test cargado');
+        const btn = document.querySelector('.fab-test');
+        console.log('Botón encontrado:', btn);
+        console.log('Estilos del botón:', window.getComputedStyle(btn).display);
+        console.log('Z-index:', window.getComputedStyle(btn).zIndex);
+        console.log('Position:', window.getComputedStyle(btn).position);
+    </script>
+</body>
+
+</html>
