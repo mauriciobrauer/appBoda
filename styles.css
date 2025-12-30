@@ -43,6 +43,26 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* iOS Fixes */
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    color-scheme: dark;
+    /* Force dark mode at system level */
+}
+
+/* iOS Input Reset */
+input,
+textarea,
+button,
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-family: inherit;
+    border-radius: 0;
+    /* Override iOS rounded corners */
 }
 
 body {
@@ -1058,9 +1078,18 @@ h3 {
     .message-reactions {
         margin-left: 0;
     }
+
+    .gallery-filters {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .filter-group {
+        min-width: 100%;
+    }
 }
 
-/* Delete Photo Button */
+/* Delete Photo Button (Global) */
 .delete-photo-btn {
     position: absolute;
     top: 10px;
@@ -1079,18 +1108,8 @@ h3 {
     font-size: 1rem;
     transition: all var(--transition-base);
     opacity: 1;
-    /* Always visible on mobile/touch, or use 0 and hover for desktop */
+    /* Always visible on touch devices */
     z-index: 10;
-}
-
-@media (hover: hover) {
-    .delete-photo-btn {
-        opacity: 0;
-    }
-
-    .photo-card:hover .delete-photo-btn {
-        opacity: 1;
-    }
 }
 
 .delete-photo-btn:hover {
@@ -1099,14 +1118,15 @@ h3 {
     transform: scale(1.1);
 }
 
-.gallery-filters {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
+/* Desktop Hover Effects */
+@media (hover: hover) {
+    .delete-photo-btn {
+        opacity: 0;
+    }
 
-.filter-group {
-    min-width: 100%;
-}
+    .photo-card:hover .delete-photo-btn {
+        opacity: 1;
+    }
 }
 
 /* Print Styles */
