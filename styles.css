@@ -69,7 +69,7 @@ a {
 
 /* Ensure purple background everywhere */
 html {
-    background-color: #1A0F2E !important;
+    background-color: #1A0F2E;
     height: 100%;
     overscroll-behavior-y: none;
     /* Prevent white bounce effect */
@@ -77,8 +77,8 @@ html {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 50%, #2A1548 100%);
-    background-attachment: fixed;
+    /* Remove background from body to avoid iOS issues */
+    background: transparent;
     /* iOS Full height fix */
     min-height: 100vh;
     min-height: -webkit-fill-available;
@@ -88,6 +88,19 @@ body {
     position: relative;
     /* Prevent text adjustment */
     -webkit-text-size-adjust: 100%;
+}
+
+/* Bulletproof Background for iOS */
+.fixed-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -9999;
+    background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 50%, #2A1548 100%);
+    pointer-events: none;
+    /* Let clicks pass through */
 }
 
 /* Fix Buttons on iOS */
