@@ -106,7 +106,23 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({'photos': photos}).encode())
             
         except Exception as e:
-            self.send_error(500, str(e))
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Server Error: {str(e)}")
+            
+            self.send_response(500)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                'error': str(e),
+                'details': error_details,
+                'config': {
+                    'cloud_name': CLOUD_NAME,
+                    'api_key': API_KEY,
+                    'folder': FOLDER,
+                    'secret_len': len(API_SECRET) if API_SECRET else 0
+                }
+            }).encode())
 
     def handle_delete_photo(self):
         try:
