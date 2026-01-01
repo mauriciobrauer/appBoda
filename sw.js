@@ -1,9 +1,10 @@
-const CACHE_NAME = 'wedding-app-v23';
+const CACHE_NAME = 'wedding-app-v24';
 const urlsToCache = [
     '/',
     '/index.html',
     '/styles.css',
     '/app.js',
+    '/couple.png',
     'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
