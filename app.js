@@ -23,22 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🎉 Wedding App Initialized');
     loadData();
 
-    // 1. OPTIMISTIC UI: Load mocks IMMEDIATELY
-    seedMockGallery();
-
-    // Aggressively seed messages for demo (overwrite if few messages)
+    // Aggressively seed messages for demo
     if (AppState.messages.length < 5) {
-        AppState.messages = []; // Clear small/test data
+        AppState.messages = [];
         seedDemoMessages();
     }
 
-    // 2. Fetch Real Photos in Background
+    // Fetch Real Photos
     loadPhotosFromCloudinary().then(() => {
-        // Refresh view after fetching
         if (AppState.currentScreen === 'gallery') {
-            const hourFilter = document.getElementById('hourFilter') ? document.getElementById('hourFilter').value : 'all';
-            const nameFilter = document.getElementById('nameFilter') ? document.getElementById('nameFilter').value : 'all';
-            renderGallery(hourFilter, nameFilter);
+            const hour = document.getElementById('hourFilter')?.value || 'all';
+            const name = document.getElementById('nameFilter')?.value || 'all';
+            renderGallery(hour, name);
         }
     });
 
@@ -47,24 +43,22 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function seedDemoMessages() {
-    if (AppState.messages.length > 5) return; // Don't overwrite if many messages exist
+    if (AppState.messages.length > 5) return;
 
     const demoMessages = [
-        { id: 1, name: 'Tía Rosa', text: '¡Qué boda tan hermosa! Los queremos mucho ❤️', timestamp: new Date(Date.now() - 3600000).toISOString() },
-        { id: 2, name: 'Primo Juan', text: 'La fiesta está increíble 🎉', timestamp: new Date(Date.now() - 7200000).toISOString() },
+        { id: 1, name: 'Tía Rosa', text: '¡Qué boda tan hermosa! ❤️', timestamp: new Date(Date.now() - 3600000).toISOString() },
+        { id: 2, name: 'Primo Juan', text: 'Fiesta increíble 🎉', timestamp: new Date(Date.now() - 7200000).toISOString() },
         { id: 3, name: 'Sofía', text: '¡Vivan los novios! 👰🤵', timestamp: new Date(Date.now() - 10800000).toISOString() },
-        { id: 4, name: 'Carlos (Novio)', text: 'Gracias a todos por acompañarnos en este día tan especial', timestamp: new Date(Date.now() - 14400000).toISOString() },
-        { id: 5, name: 'Laura', text: 'Me encanta el vestido 😍', timestamp: new Date(Date.now() - 18000000).toISOString() },
-        { id: 6, name: 'Abuela Tere', text: 'Dios los bendiga siempre mis niños', timestamp: new Date().toISOString() }, // Fixed syntax error
+        { id: 4, name: 'Carlos', text: 'Gracias a todos', timestamp: new Date(Date.now() - 14400000).toISOString() },
+        { id: 5, name: 'Laura', text: 'El vestido 😍', timestamp: new Date(Date.now() - 18000000).toISOString() },
+        { id: 6, name: 'Abuela', text: 'Bendiciones', timestamp: new Date().toISOString() },
         { id: 7, name: 'Pedro', text: '¡Salud! 🥂', timestamp: new Date(Date.now() - 500000).toISOString() },
-        { id: 8, name: 'Mariana', text: 'La comida estuvo deliciosa 🍽️', timestamp: new Date(Date.now() - 9000000).toISOString() },
-        { id: 9, name: 'Luis', text: 'Gran ambiente! 🕺', timestamp: new Date(Date.now() - 12000000).toISOString() },
-        { id: 10, name: 'Andrea', text: 'Felicidades María y Carlos! 💕', timestamp: new Date(Date.now() - 15000000).toISOString() }
+        { id: 8, name: 'Ana', text: 'Rico pastel 🍰', timestamp: new Date(Date.now() - 900000).toISOString() },
+        { id: 9, name: 'Luis', text: 'Gran ambiente 🕺', timestamp: new Date(Date.now() - 1200000).toISOString() },
+        { id: 10, name: 'Andrea', text: 'Felicidades 💕', timestamp: new Date(Date.now() - 150000).toISOString() }
     ];
 
-    // Add random photo to first message (simulated)
     demoMessages[0].image = 'couple.png';
-
     AppState.messages = demoMessages;
     saveData();
 }
@@ -73,25 +67,21 @@ function seedDemoMessages() {
 async function loadPhotosFromCloudinary() {
     try {
         const response = await fetch('/api/photos');
-        if (!response.ok) {
-            throw new Error('Failed to fetch photos from Cloudinary');
-        }
+        if (!response.ok) throw new Error('API Error ' + response.status);
 
         const data = await response.json();
-        const cloudinaryPhotos = data.photos || [];
+        const photos = data.photos || [];
 
-        if (cloudinaryPhotos.length > 0) {
-            AppState.photos = cloudinaryPhotos;
-            console.log(`✅ Loaded ${cloudinaryPhotos.length} photos from Cloudinary`);
-        } else {
-            console.log('⚠️ Cloudinary returned 0 photos, using mock data');
-            seedMockGallery(); // Fallback if API returns empty
-        }
+        // Always use real data (even if empty)
+        AppState.photos = photos;
+        console.log(`✅ Loaded ${photos.length} real photos`);
+
     } catch (error) {
-        console.error('Error loading photos from Cloudinary:', error);
-        seedMockGallery(); // Fallback on error
+        console.error('API Error:', error);
+        // seedMockGallery(); // DISABLED by user request
     }
 }
+
 
 function seedMockGallery() {
     // Safety net: Show mock photos ensuring gallery is NEVER empty during demo

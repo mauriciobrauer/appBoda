@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wedding-app-v33';
+const CACHE_NAME = 'wedding-app-v34';
 const urlsToCache = [
     '/',
     '/index.html',
