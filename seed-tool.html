@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sembrador de Fotos Cloudinary</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #111;
+            color: white;
+            text-align: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #6B4E9B;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 20px;
+        }
+
+        #log {
+            margin-top: 20px;
+            text-align: left;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .success {
+            color: #4caf50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🌱 Sembrador de Galería</h1>
+    <p>Esta herramienta subirá 5 fotos de prueba reales a tu Cloudinary.</p>
+    <button onclick="startSeeding()">🚀 Sembrar 5 Fotos Ahora</button>
+    <div id="log">Esperando...</div>
+
+    <script>
+        // Configuración EXACTA de tu App
+        const CLOUD_NAME = 'dmhlpqryp';
+        const UPLOAD_PRESET = 'Wedding';
+        const FOLDER = 'cdb5f9314f082dad2bbb1b92e37a9a36f5'; // El hash de carpeta
+
+        // Fotos de Unsplash para subir
+        const IMAGES_TO_UPLOAD = [
+            'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80', // Boda
+            'https://images.unsplash.com/photo-1511285560982-1351c4f6170b?w=800&q=80', // Baile
+            'https://images.unsplash.com/photo-1546195514-04660eb6f7df?w=800&q=80',   // Comida
+            'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?w=800&q=80', // Flores
+            'https://images.unsplash.com/photo-1522673607200-1645062cd958?w=800&q=80'  // Brindis
+        ];
+
+        async function log(msg, type = 'info') {
+            const div = document.getElementById('log');
+            const p = document.createElement('p');
+            p.textContent = msg;
+            p.className = type;
+            div.appendChild(p);
+            console.log(msg);
+        }
+
+        async function startSeeding() {
+            log('Iniciando proceso de sembrado...', 'info');
+
+            for (let i = 0; i < IMAGES_TO_UPLOAD.length; i++) {
+                try {
+                    const imgUrl = IMAGES_TO_UPLOAD[i];
+                    log(`Descargando imagen ${i + 1}...`, 'info');
+
+                    // 1. Fetch imagen de Unsplash
+                    const response = await fetch(imgUrl);
+                    const blob = await response.blob();
+
+                    // 2. Subir a Cloudinary
+                    log(`Subiendo imagen ${i + 1} a Cloudinary...`, 'info');
+                    const formData = new FormData();
+                    formData.append('file', blob);
+                    formData.append('upload_preset', UPLOAD_PRESET);
+                    formData.append('folder', FOLDER);
+                    formData.append('context', `uploader=Sembrador|caption=Demo Foto ${i + 1}`);
+
+                    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadRes.ok) throw new Error('Upload failed: ' + uploadRes.statusText);
+
+                    const data = await uploadRes.json();
+                    log(`✅ Foto ${i + 1} subida con éxito! ID: ${data.public_id}`, 'success');
+
+                } catch (e) {
+                    log(`❌ Error subiendo foto ${i + 1}: ${e.message}`, 'error');
+                }
+            }
+            log('✨ Proceso terminado. Espera 1 minuto y revisa la galería.', 'success');
+        }
+    </script>
+</body>
+
+</html>
