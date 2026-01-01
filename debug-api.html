@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Debugger</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #0f0;
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .error {
+            color: #f55;
+        }
+
+        .success {
+            color: #5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🕵️ API Debugger</h1>
+    <p>Testing endpoint: <strong>/api/photos</strong></p>
+    <button onclick="testApi()">Re-Test API</button>
+    <div id="results"></div>
+
+    <script>
+        async function testApi() {
+            const results = document.getElementById('results');
+            results.innerHTML = 'Loading...';
+
+            try {
+                const start = Date.now();
+                const response = await fetch('/api/photos');
+                const time = Date.now() - start;
+
+                let text = await response.text();
+                let json = null;
+                try {
+                    json = JSON.parse(text);
+                } catch (e) {
+                    // Not JSON
+                }
+
+                const statusClass = response.ok ? 'success' : 'error';
+
+                results.innerHTML = `
+                    <div class="${statusClass}">
+                        <h3>Status: ${response.status} ${response.statusText} (${time}ms)</h3>
+                    </div>
+                    <h4>Raw Response:</h4>
+                    <pre>${text}</pre>
+                    <h4>Parsed JSON Photos count:</h4>
+                    <pre>${json && json.photos ? json.photos.length : 'N/A'}</pre>
+                `;
+            } catch (err) {
+                results.innerHTML = `<div class="error"><h3>Network Error: ${err.message}</h3></div>`;
+            }
+        }
+
+        // Auto run
+        testApi();
+    </script>
+</body>
+
+</html>
