@@ -1,7 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import os
-import requests
 from urllib.parse import parse_qs, urlparse
 from datetime import datetime, timedelta
 
@@ -34,29 +33,41 @@ class handler(BaseHTTPRequestHandler):
             self.send_error(404, "Not Found")
 
     def handle_get_photos(self):
-        try:
+            # Try minimal dependencies approach (urllib instead of requests)
+            import urllib.request
+            import base64
+            
             # Setup Cloudinary API URL
             url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/search'
              
-            # Parameters for search
-            params = {
+            # Parameters for search (manual query string construction)
+            query_params = {
                 'expression': f'folder:{FOLDER} AND resource_type:image',
-                'max_results': 500,
+                'max_results': '500',
                 'sort_by': 'created_at:desc',
                 'context': 'true'
             }
             
-            # Make request
-            response = requests.get(url, params=params, auth=(API_KEY, API_SECRET))
+            # Encode params
+            from urllib.parse import urlencode
+            full_url = f"{url}?{urlencode(query_params)}"
             
-            if response.status_code != 200:
-                print(f"Error from Cloudinary: {response.text}")
-                self.send_response(500)
-                self.end_headers()
-                return
-
-            data = response.json()
+            # Create Request
+            req = urllib.request.Request(full_url)
+            
+            # Basic Auth Header
+            auth_str = f"{API_KEY}:{API_SECRET}"
+            auth_b64 = base64.b64encode(auth_str.encode()).decode()
+            req.add_header("Authorization", f"Basic {auth_b64}")
+            
+            # Make request
+            with urllib.request.urlopen(req) as response:
+                response_body = response.read()
+                data = json.loads(response_body)
+            
             resources = data.get('resources', [])
+            
+            # Process resources similar to local server (keep existing logic)
             
             # Process resources similar to local server
             photos = []
@@ -135,27 +146,37 @@ class handler(BaseHTTPRequestHandler):
                 self.send_error(400, "Missing public_id")
                 return
 
-            # Admin API delete
-            delete_url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/{resource_type}'
+            # Admin API delete using urllib
+            delete_url_base = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/{resource_type}'
             
-            params = {
-                'public_ids[]': [public_id]
+            from urllib.parse import urlencode, quote
+            # Cloudinary expects repeated keys 'public_ids[]' for array. 
+            # urlencode supports list of tuples or dict with list values if doseq=True
+            
+            delete_params = {
+                'public_ids[]': public_id
             }
+            query_string = urlencode(delete_params)
+            full_delete_url = f"{delete_url_base}?{query_string}"
             
-            response = requests.delete(
-                delete_url,
-                params=params, 
-                auth=(API_KEY, API_SECRET)
-            )
-
-            if response.status_code == 200:
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.end_headers()
-                self.wfile.write(json.dumps({'success': True}).encode())
-            else:
-                self.send_error(500, "Deletion failed")
+            import urllib.request
+            import base64
+            
+            req = urllib.request.Request(full_delete_url, method='DELETE')
+            
+            # Auth
+            auth_str = f"{API_KEY}:{API_SECRET}"
+            auth_b64 = base64.b64encode(auth_str.encode()).decode()
+            req.add_header("Authorization", f"Basic {auth_b64}")
+            
+            with urllib.request.urlopen(req) as response:
+                if response.status == 200:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'success': True}).encode())
+                else:
+                    raise Exception(f"Delete Failed: {response.status}")
 
         except Exception as e:
             self.send_error(500, str(e))
