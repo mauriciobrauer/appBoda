@@ -127,49 +127,43 @@ function seedMockGallery() {
 // Navigation
 function navigateTo(screen) {
     // Hide all screens
-    const screens = ['homeScreen', 'uploadScreen', 'galleryScreen', 'messagesScreen', 'writeMessageScreen'];
+    const screens = ['homeScreen', 'uploadScreen', 'messagesScreen', 'logisticsScreen', 'funScreen', 'menuScreen'];
     screens.forEach(s => {
-        document.getElementById(s).classList.add('hidden');
+        const el = document.getElementById(s);
+        if (el) el.classList.add('hidden');
     });
 
     // Show selected screen
     const screenMap = {
         'home': 'homeScreen',
         'upload': 'uploadScreen',
-        'gallery': 'galleryScreen',
         'messages': 'messagesScreen',
-        'writeMessage': 'writeMessageScreen'
+        'logistics': 'logisticsScreen',
+        'fun': 'funScreen',
+        'menu': 'menuScreen'
     };
 
     const targetScreen = screenMap[screen];
     console.log('🔍 navigateTo called with screen:', screen);
-    console.log('🔍 Target screen element:', targetScreen);
 
     if (targetScreen) {
         document.getElementById(targetScreen).classList.remove('hidden');
         AppState.currentScreen = screen;
 
         // Update active nav item
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
+        // Simple heuristic: match the onclick attribute or index
+        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        navItems.forEach(item => item.classList.remove('active'));
+
+        // Find the nav item that corresponds to this screen
+        const activeLink = document.querySelector(`.bottom-nav .nav-item[onclick*="'${screen}'"]`);
+        if (activeLink) activeLink.classList.add('active');
 
         // Refresh content
-        if (screen === 'gallery') {
+        if (screen === 'home') {
             loadPhotosFromCloudinary().then(() => renderGallery());
         } else if (screen === 'messages') {
-            console.log('🔍 About to call renderMessages()');
             renderMessages();
-            console.log('🔍 renderMessages() completed');
-
-            // Check if button exists after render
-            const writeButton = document.querySelector('button[onclick*="writeMessage"]');
-            console.log('🔍 Write button found:', writeButton);
-            if (writeButton) {
-                console.log('🔍 Button text:', writeButton.textContent);
-                console.log('🔍 Button styles:', window.getComputedStyle(writeButton).display);
-                console.log('🔍 Button position:', writeButton.getBoundingClientRect());
-            }
         }
 
         // Scroll to top
@@ -332,9 +326,9 @@ async function handleUpload(event) {
         selectedFiles = [];
         displayFilePreview();
 
-        // Navigate to gallery
+        // Navigate to home (feed)
         setTimeout(() => {
-            navigateTo('gallery');
+            navigateTo('home');
         }, 1000);
 
     } catch (error) {
@@ -438,97 +432,40 @@ function getCurrentHourCategory() {
 }
 
 
-// Render Gallery
-function renderGallery(hourFilter = 'all', nameFilter = 'all') {
+// Render Gallery (Home Feed)
+function renderGallery() {
     const grid = document.getElementById('photoGrid');
-    const filtersContainer = document.getElementById('galleryFilters');
+    if (!grid) return;
 
-    // Filter photos by hour AND name
-    let filteredPhotos = AppState.photos.filter(p => {
-        const hourMatch = hourFilter === 'all' || p.hour === hourFilter;
-        const nameMatch = nameFilter === 'all' || p.uploaderName === nameFilter;
-        return hourMatch && nameMatch;
-    });
+    // Use all photos, sorted by newest
+    let sortedPhotos = [...AppState.photos].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    // Sort by timestamp (newest first)
-    filteredPhotos.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    // Get unique hours and names
-    const hours = ['all', ...new Set(AppState.photos.map(p => p.hour).filter(h => h && h !== 'all'))];
-    const names = ['all', ...new Set(AppState.photos.map(p => p.uploaderName).filter(n => n))];
-
-    // Render filter dropdowns
-    filtersContainer.innerHTML = `
-        <div class="filter-group">
-            <label for="hourFilter">
-                <span style="font-size: 1.2rem;">🕐</span> Hora
-            </label>
-            <select id="hourFilter" class="filter-select">
-                ${hours.map(h => `
-                    <option value="${h}" ${h === hourFilter ? 'selected' : ''}>
-                        ${h === 'all' ? 'Todas las horas' : h}
-                    </option>
-                `).join('')}
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label for="nameFilter">
-                <span style="font-size: 1.2rem;">👤</span> Persona
-            </label>
-            <select id="nameFilter" class="filter-select">
-                ${names.map(n => `
-                    <option value="${n}" ${n === nameFilter ? 'selected' : ''}>
-                        ${n === 'all' ? 'Todas las personas' : n}
-                    </option>
-                `).join('')}
-            </select>
-        </div>
-    `;
-
-    // Add event listeners to dropdowns
-    document.getElementById('hourFilter').addEventListener('change', (e) => {
-        const newNameFilter = document.getElementById('nameFilter').value;
-        renderGallery(e.target.value, newNameFilter);
-    });
-
-    document.getElementById('nameFilter').addEventListener('change', (e) => {
-        const newHourFilter = document.getElementById('hourFilter').value;
-        renderGallery(newHourFilter, e.target.value);
-    });
-
-    // Render photos
-    if (filteredPhotos.length === 0) {
+    if (sortedPhotos.length === 0) {
         grid.innerHTML = `
-            <div class="text-center" style="grid-column: 1/-1; padding: 3rem; color: var(--text-muted);">
-                <p style="font-size: 3rem; margin-bottom: 1rem;">📷</p>
-                <p>No hay fotos que coincidan con los filtros seleccionados</p>
+            <div class="text-center" style="grid-column: 1/-1; padding: 2rem; color: #999;">
+                <p>Aún no hay fotos shared. ¡Sé el primero!</p>
             </div>
         `;
         return;
     }
 
     grid.innerHTML = '';
-    filteredPhotos.forEach(photo => {
+    sortedPhotos.forEach(photo => {
         const card = document.createElement('div');
-        card.className = 'photo-card';
+        card.className = 'photo-item';
         card.onclick = () => openPhotoModal(photo);
 
         const mediaElement = photo.resourceType === 'video'
-            ? `<video src="${photo.url}" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>`
+            ? `<video src="${photo.url}" muted loop playsinline></video>`
             : `<img src="${photo.url}" alt="${photo.caption || 'Foto'}" loading="lazy">`;
 
+        // Add a small overlay for the name
         card.innerHTML = `
             ${mediaElement}
-            <div class="photo-overlay">
-                <div class="photo-info">
-                    <span>${getAvatarEmoji(photo.uploaderName)}</span>
-                    <span>${photo.uploaderName}</span>
-                </div>
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 0.5rem; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: white; display: flex; align-items: center; gap: 4px; font-size: 0.8rem;">
+                <span>${getAvatarEmoji(photo.uploaderName)}</span>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${photo.uploaderName}</span>
             </div>
-            <button class="delete-photo-btn" onclick="event.stopPropagation(); deletePhoto('${photo.publicId}', '${photo.resourceType}', '${photo.id}')" title="Eliminar foto">
-                🗑️
-            </button>
         `;
 
         grid.appendChild(card);
