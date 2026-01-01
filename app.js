@@ -92,17 +92,30 @@ async function loadPhotosFromCloudinary() {
 function seedMockGallery() {
     // Safety net: Show mock photos ensuring gallery is NEVER empty during demo
     const mockPhotos = [];
-    for (let i = 0; i < 20; i++) {
+    const keywords = ['Boda', 'Novios', 'Fiesta', 'Baile', 'Pastel'];
+    for (let i = 0; i < 25; i++) {
         mockPhotos.push({
             id: 'mock_' + i,
-            url: 'couple.png', // Re-use the couple photo as placeholder
-            uploaderName: ['Tía Rosa', 'Juan', 'Sofia', 'Carlos'][i % 4],
+            publicId: 'mock_' + i,
+            url: `https://placehold.co/600x800/6B4E9B/FFF?text=${keywords[i % 5]}+${i + 1}`,
+            resourceType: 'image',
+            uploaderName: ['Tía Rosa', 'Juan', 'Sofia', 'Carlos', 'Invitado'][i % 5],
             caption: 'Foto de prueba ' + (i + 1),
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(Date.now() - (i * 1000 * 60 * 30)).toISOString(),
             hour: 'all'
         });
     }
+
+    // Calculate simulated hours
+    mockPhotos.forEach(p => {
+        const h = new Date(p.timestamp).getHours();
+        const nextH = (h + 1) % 24;
+        const format = h => h === 0 ? '12am' : (h < 12 ? h + 'am' : (h === 12 ? '12pm' : (h - 12) + 'pm'));
+        p.hour = `${format(h)}-${format(nextH)}`;
+    });
+
     AppState.photos = mockPhotos;
+    console.log('✅ Mock Gallery Seeded with 25 photos (Fallback)');
 }
 
 // Navigation
