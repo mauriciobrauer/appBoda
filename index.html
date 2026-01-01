@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://res.cloudinary.com">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=force_reload_01">
 
     <!-- Favicon -->
     <link rel="icon"
@@ -31,6 +31,17 @@
 </head>
 
 <body>
+    <script>
+        if (!sessionStorage.getItem('cleaned_v3')) {
+            sessionStorage.setItem('cleaned_v3', 'true');
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    regs.forEach(r => r.unregister());
+                    window.location.reload(true);
+                });
+            }
+        }
+    </script>
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="spinner"></div>
@@ -306,5 +317,5 @@
     </nav>
 
     <!-- Main JavaScript -->
-    <script src="app.js"></script>
+    <script src="app.js?v=force_reload_01"></script>
 </body>
