@@ -22,13 +22,17 @@ const AppState = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎉 Wedding App Initialized');
     loadData();
+
+    // 1. OPTIMISTIC UI: Load mocks IMMEDIATELY
+    seedMockGallery();
+
     // Aggressively seed messages for demo (overwrite if few messages)
     if (AppState.messages.length < 5) {
         AppState.messages = []; // Clear small/test data
         seedDemoMessages();
     }
 
-    // FETCH PHOTOS IMMEDIATELY
+    // 2. Fetch Real Photos in Background
     loadPhotosFromCloudinary().then(() => {
         // Refresh view after fetching
         if (AppState.currentScreen === 'gallery') {
