@@ -79,6 +79,7 @@
                     <div style="background: #333; padding: 10px; margin: 10px 0; border-radius: 5px;">
                         <strong>🔍 Debug Info:</strong>
                         <ul>
+                            <li><strong>API Version:</strong> ${json?.debug_info?.version || 'OLD CACHED'}</li>
                             <li><strong>Cloud Name:</strong> ${json?.debug_info?.connected_cloud_name || 'Desconocido'}</li>
                             <li><strong>Target Folder:</strong> ${json?.debug_info?.target_folder || 'N/A'}</li>
                             <li><strong>Query:</strong> ${json?.debug_info?.search_expression || 'N/A'}</li>

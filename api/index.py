@@ -117,6 +117,7 @@ class handler(BaseHTTPRequestHandler):
             response_data = {
                 'photos': photos,
                 'debug_info': {
+                    'version': 'v2-debug',  # FORCE UPDATE
                     'connected_cloud_name': CLOUD_NAME,
                     'target_folder': FOLDER,
                     'search_expression': query_params['expression']
