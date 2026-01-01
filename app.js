@@ -433,23 +433,36 @@ function getCurrentHourCategory() {
 
 // Render Gallery (Home Feed)
 function renderGallery() {
+    console.log('🎨 renderGallery() Called');
     const grid = document.getElementById('photoGrid');
-    if (!grid) return;
+    console.log('🔍 Element #photoGrid:', grid);
+
+    if (!grid) {
+        console.error('❌ CRITICAL: #photoGrid not found in DOM');
+        return;
+    }
 
     // Use all photos, sorted by newest
+    console.log(`📂 Sorting ${AppState.photos.length} photos...`);
     let sortedPhotos = [...AppState.photos].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    console.log('✅ Photos sorted. Count:', sortedPhotos.length);
 
     if (sortedPhotos.length === 0) {
+        console.log('⚠️ No photos to display. Showing empty state.');
         grid.innerHTML = `
             <div class="text-center" style="grid-column: 1/-1; padding: 2rem; color: #999;">
-                <p>Aún no hay fotos shared. ¡Sé el primero!</p>
+                <p>Aún no hay fotos compartidas. ¡Sé el primero!</p>
+                <div style="font-size: 0.8em; margin-top: 10px;">Debug: 0 photos loaded</div>
             </div>
         `;
         return;
     }
 
     grid.innerHTML = '';
+    console.log('🖼️ Creating photo cards...');
+
     sortedPhotos.forEach(photo => {
+        // console.log(` - Rendering photo ${photo.id} (${photo.url})`);
         const card = document.createElement('div');
         card.className = 'photo-item';
         card.onclick = () => openPhotoModal(photo);
@@ -469,6 +482,7 @@ function renderGallery() {
 
         grid.appendChild(card);
     });
+    console.log('✨ Gallery Render Complete');
 }
 
 // Delete Photo
@@ -733,23 +747,32 @@ function loadData() {
 
 // Load Photos from Cloudinary
 async function loadPhotosFromCloudinary() {
+    console.log('🔄 Calling loadPhotosFromCloudinary...');
     try {
         // Cache busting: Add timestamp to URL
-        const response = await fetch(`/api/photos?_t=${Date.now()}`);
+        const apiUrl = `/api/photos?_t=${Date.now()}`;
+        console.log(`🌐 Fetching from: ${apiUrl}`);
+
+        const response = await fetch(apiUrl);
+        console.log(`📡 Response Status: ${response.status}`);
+
         if (!response.ok) {
+            console.error('❌ API Error Response:', response.statusText);
             throw new Error('Failed to fetch photos from Cloudinary');
         }
 
         const data = await response.json();
+        console.log('📦 API Data Received:', data);
+
         const cloudinaryPhotos = data.photos || [];
+        console.log(`🔢 Photos found in response: ${cloudinaryPhotos.length}`);
 
         // Replace AppState.photos with ONLY Cloudinary photos (ignore localStorage)
         AppState.photos = cloudinaryPhotos;
 
-        console.log(`✅ Loaded ${cloudinaryPhotos.length} photos from Cloudinary`);
-        console.log(`📸 Total photos in gallery: ${AppState.photos.length}`);
+        console.log(`✅ AppState updated. Total photos: ${AppState.photos.length}`);
     } catch (error) {
-        console.error('Error loading photos from Cloudinary:', error);
+        console.error('❌ Error loading photos from Cloudinary:', error);
         // Keep existing localStorage photos if Cloudinary fails
     }
 }
