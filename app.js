@@ -72,35 +72,48 @@ async function loadPhotosFromCloudinary() {
         const data = await response.json();
         const photos = data.photos || [];
 
-        // Always use real data (even if empty)
-        AppState.photos = photos;
-        console.log(`✅ Loaded ${photos.length} real photos`);
+        // Always use real data if available
+        if (photos.length > 0) {
+            AppState.photos = photos;
+            console.log(`✅ Loaded ${photos.length} real photos`);
+        } else {
+            // Fallback for Demo if API empty
+            console.log('⚠️ API Empty -> Seeding Mocks for Demo');
+            seedMockGallery();
+        }
 
     } catch (error) {
         console.error('API Error:', error);
-        // seedMockGallery(); // DISABLED by user request
+        seedMockGallery();
     }
 }
 
-
 function seedMockGallery() {
-    // Safety net: Show mock photos ensuring gallery is NEVER empty during demo
     const mockPhotos = [];
-    const keywords = ['Boda', 'Novios', 'Fiesta', 'Baile', 'Pastel'];
+    const keywords = ['wedding', 'party', 'dance', 'cake', 'love'];
+    // Unsplash wedding photos
+    const urls = [
+        'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
+        'https://images.unsplash.com/photo-1511285560982-1351c4f6170b?w=800&q=80',
+        'https://images.unsplash.com/photo-1546195514-04660eb6f7df?w=800&q=80',
+        'https://images.unsplash.com/photo-1507915977619-6ccfe8003ae7?w=800&q=80',
+        'https://images.unsplash.com/photo-1520854221256-17451cc330e7?w=800&q=80'
+    ];
+
     for (let i = 0; i < 25; i++) {
         mockPhotos.push({
             id: 'mock_' + i,
             publicId: 'mock_' + i,
-            url: `https://placehold.co/600x800/6B4E9B/FFF?text=${keywords[i % 5]}+${i + 1}`,
+            url: urls[i % 5],
             resourceType: 'image',
             uploaderName: ['Tía Rosa', 'Juan', 'Sofia', 'Carlos', 'Invitado'][i % 5],
-            caption: 'Foto de prueba ' + (i + 1),
+            caption: ['¡Qué momento!', 'Bailando', 'Los novios', 'Felicidades', 'Salud'][i % 5] + ' ' + (i + 1),
             timestamp: new Date(Date.now() - (i * 1000 * 60 * 30)).toISOString(),
             hour: 'all'
         });
     }
 
-    // Calculate simulated hours
+    // Fix hours
     mockPhotos.forEach(p => {
         const h = new Date(p.timestamp).getHours();
         const nextH = (h + 1) % 24;
@@ -109,7 +122,6 @@ function seedMockGallery() {
     });
 
     AppState.photos = mockPhotos;
-    console.log('✅ Mock Gallery Seeded with 25 photos (Fallback)');
 }
 
 // Navigation
