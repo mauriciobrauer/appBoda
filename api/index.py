@@ -41,8 +41,9 @@ class handler(BaseHTTPRequestHandler):
             url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/search'
              
             # Parameters for search (manual query string construction)
+            # DEBUG: REMOVE FOLDER FILTER TO FIND ANY PHOTOS
             query_params = {
-                'expression': f'folder:{FOLDER} AND resource_type:image',
+                'expression': 'resource_type:image', 
                 'max_results': '500',
                 'sort_by': 'created_at:desc',
                 'context': 'true'
