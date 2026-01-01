@@ -455,13 +455,6 @@ function renderGallery(hourFilter = 'all', nameFilter = 'all') {
     const hours = ['all', ...new Set(AppState.photos.map(p => p.hour).filter(h => h && h !== 'all'))];
     const names = ['all', ...new Set(AppState.photos.map(p => p.uploaderName).filter(n => n))];
 
-    // DEBUG: Visual Counter
-    const debugCounter = document.getElementById('galleryDebug') || document.createElement('div');
-    debugCounter.id = 'galleryDebug';
-    debugCounter.style.cssText = 'background:red; color:white; padding:10px; text-align:center; font-weight:bold; width:100%;';
-    debugCounter.innerHTML = `DEBUG: Total Photos: ${AppState.photos.length} | Filtered: ${filteredPhotos.length} | Hour: ${hourFilter} | Name: ${nameFilter}`;
-    grid.parentNode.insertBefore(debugCounter, grid);
-
     // Render filter dropdowns
     filtersContainer.innerHTML = `
         <div class="filter-group">
