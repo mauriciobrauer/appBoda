@@ -51,7 +51,7 @@ function seedDemoMessages() {
         { id: 3, name: 'Sofía', text: '¡Vivan los novios! 👰🤵', timestamp: new Date(Date.now() - 10800000).toISOString() },
         { id: 4, name: 'Carlos (Novio)', text: 'Gracias a todos por acompañarnos en este día tan especial', timestamp: new Date(Date.now() - 14400000).toISOString() },
         { id: 5, name: 'Laura', text: 'Me encanta el vestido 😍', timestamp: new Date(Date.now() - 18000000).toISOString() },
-        { id: 6, name: 'Abuela Tere', text: 'Dios los bendiga siempre mis niños', timestamp: new Date.now() },
+        { id: 6, name: 'Abuela Tere', text: 'Dios los bendiga siempre mis niños', timestamp: new Date().toISOString() }, // Fixed syntax error
         { id: 7, name: 'Pedro', text: '¡Salud! 🥂', timestamp: new Date(Date.now() - 500000).toISOString() },
         { id: 8, name: 'Mariana', text: 'La comida estuvo deliciosa 🍽️', timestamp: new Date(Date.now() - 9000000).toISOString() },
         { id: 9, name: 'Luis', text: 'Gran ambiente! 🕺', timestamp: new Date(Date.now() - 12000000).toISOString() },
@@ -63,6 +63,46 @@ function seedDemoMessages() {
 
     AppState.messages = demoMessages;
     saveData();
+}
+
+// Load Photos from Cloudinary
+async function loadPhotosFromCloudinary() {
+    try {
+        const response = await fetch('/api/photos');
+        if (!response.ok) {
+            throw new Error('Failed to fetch photos from Cloudinary');
+        }
+
+        const data = await response.json();
+        const cloudinaryPhotos = data.photos || [];
+
+        if (cloudinaryPhotos.length > 0) {
+            AppState.photos = cloudinaryPhotos;
+            console.log(`✅ Loaded ${cloudinaryPhotos.length} photos from Cloudinary`);
+        } else {
+            console.log('⚠️ Cloudinary returned 0 photos, using mock data');
+            seedMockGallery(); // Fallback if API returns empty
+        }
+    } catch (error) {
+        console.error('Error loading photos from Cloudinary:', error);
+        seedMockGallery(); // Fallback on error
+    }
+}
+
+function seedMockGallery() {
+    // Safety net: Show mock photos ensuring gallery is NEVER empty during demo
+    const mockPhotos = [];
+    for (let i = 0; i < 20; i++) {
+        mockPhotos.push({
+            id: 'mock_' + i,
+            url: 'couple.png', // Re-use the couple photo as placeholder
+            uploaderName: ['Tía Rosa', 'Juan', 'Sofia', 'Carlos'][i % 4],
+            caption: 'Foto de prueba ' + (i + 1),
+            timestamp: new Date().toISOString(),
+            hour: 'all'
+        });
+    }
+    AppState.photos = mockPhotos;
 }
 
 // Navigation
