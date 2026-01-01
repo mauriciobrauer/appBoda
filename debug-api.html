@@ -57,14 +57,30 @@
 
                 const statusClass = response.ok ? 'success' : 'error';
 
+                let imagesHtml = '';
+                if (json && json.photos && Array.isArray(json.photos)) {
+                    imagesHtml = `<div style="display: grid; gap: 10px;">
+                        ${json.photos.map(p => `
+                        <div style="background: #222; padding: 10px; border: 1px solid #444; border-radius: 5px;">
+                            <div style="margin-bottom: 5px;"><strong>URL:</strong> <a href="${p.url}" target="_blank" style="color: #64ffda; word-break: break-all;">${p.url}</a></div>
+                            <div style="margin-bottom: 5px; font-size: 0.9em; color: #888;">Uploader: ${p.uploaderName} | ${p.timestamp}</div>
+                            <img src="${p.url}" style="max-width: 150px; height: auto; border-radius: 4px;" loading="lazy">
+                        </div>`).join('')}
+                    </div>`;
+                } else {
+                    imagesHtml = '<p>No photos array found in response.</p>';
+                }
+
                 results.innerHTML = `
                     <div class="${statusClass}">
                         <h3>Status: ${response.status} ${response.statusText} (${time}ms)</h3>
                     </div>
+                    
+                    <h4>Found Images (${json && json.photos ? json.photos.length : 0}):</h4>
+                    ${imagesHtml}
+
                     <h4>Raw Response:</h4>
-                    <pre>${text}</pre>
-                    <h4>Parsed JSON Photos count:</h4>
-                    <pre>${json && json.photos ? json.photos.length : 'N/A'}</pre>
+                    <pre style="max-height: 300px; overflow: auto;">${text}</pre>
                 `;
             } catch (err) {
                 results.innerHTML = `<div class="error"><h3>Network Error: ${err.message}</h3></div>`;
