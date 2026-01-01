@@ -99,23 +99,36 @@ class handler(BaseHTTPRequestHandler):
                 except:
                     pass
                 
+                # Copy existing logic but ensure safe access
+                context = resource.get('context', {}).get('custom', {})
                 photos.append({
                     'id': resource.get('public_id'),
                     'url': resource.get('secure_url'),
-                    'publicId': resource.get('public_id'),
-                    'resourceType': resource.get('resource_type', 'image'),
+                    'width': resource.get('width'),
+                    'height': resource.get('height'),
+                    'format': resource.get('format'),
+                    'uploaderName': context.get('uploader', 'Anónimo'),
+                    'caption': context.get('caption', ''),
                     'timestamp': resource.get('created_at'),
-                    'uploaderName': uploader_name,
-                    'caption': caption,
-                    'hour': hour_category
+                    'publicId': resource.get('public_id'),
+                    'resourceType': resource.get('resource_type')
                 })
+            
+            response_data = {
+                'photos': photos,
+                'debug_info': {
+                    'connected_cloud_name': CLOUD_NAME,
+                    'target_folder': FOLDER,
+                    'search_expression': query_params['expression']
+                }
+            }
             
             # Send response
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps({'photos': photos}).encode())
+            self.wfile.write(json.dumps(response_data).encode())
             
         except Exception as e:
             import traceback
