@@ -31,10 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch Real Photos
     loadPhotosFromCloudinary().then(() => {
-        if (AppState.currentScreen === 'gallery') {
-            const hour = document.getElementById('hourFilter')?.value || 'all';
-            const name = document.getElementById('nameFilter')?.value || 'all';
-            renderGallery(hour, name);
+        // Just render without filters for the new Home feed
+        if (AppState.currentScreen === 'home') {
+            renderGallery();
         }
     });
 
@@ -735,7 +734,8 @@ function loadData() {
 // Load Photos from Cloudinary
 async function loadPhotosFromCloudinary() {
     try {
-        const response = await fetch('/api/photos');
+        // Cache busting: Add timestamp to URL
+        const response = await fetch(`/api/photos?_t=${Date.now()}`);
         if (!response.ok) {
             throw new Error('Failed to fetch photos from Cloudinary');
         }

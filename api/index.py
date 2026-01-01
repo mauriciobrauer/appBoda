@@ -1,10 +1,10 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import os
-from urllib.parse import parse_qs, urlparse
+import requests
 from datetime import datetime, timedelta
 
-# Configuration from Environment Variables
+# Configuration defaults matching server.py
 CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', 'dmhlpqryp')
 API_KEY = os.environ.get('CLOUDINARY_API_KEY', '422427495997419')
 API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', 'W-SSuMTlNH_T2e4Znb6okMnui4I')
@@ -20,7 +20,6 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        # Only handle API requests
         if '/api/photos' in self.path:
             self.handle_get_photos()
         else:
@@ -33,54 +32,58 @@ class handler(BaseHTTPRequestHandler):
             self.send_error(404, "Not Found")
 
     def handle_get_photos(self):
-            # Try minimal dependencies approach (urllib instead of requests)
-            import urllib.request
-            import base64
+        try:
+            print(f"Fetching photos from Cloudinary. Cloud: {CLOUD_NAME}, Folder: {FOLDER}")
             
-            # Setup Cloudinary API URL
-            url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/search'
-             
-            # Parameters for search (manual query string construction)
-            # DEBUG: REMOVE FOLDER FILTER TO FIND ANY PHOTOS
-            query_params = {
-                'expression': 'resource_type:image', 
-                'max_results': '500',
-                'sort_by': 'created_at:desc',
+            # 1. Fetch Images
+            image_url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/image'
+            params = {
+                'type': 'upload',
+                'prefix': FOLDER,
+                'max_results': 500,
                 'context': 'true'
             }
             
-            # Encode params
-            from urllib.parse import urlencode
-            full_url = f"{url}?{urlencode(query_params)}"
+            auth = (API_KEY, API_SECRET)
             
-            # Create Request
-            req = urllib.request.Request(full_url)
+            all_resources = []
             
-            # Basic Auth Header
-            auth_str = f"{API_KEY}:{API_SECRET}"
-            auth_b64 = base64.b64encode(auth_str.encode()).decode()
-            req.add_header("Authorization", f"Basic {auth_b64}")
-            
-            # Make request
-            with urllib.request.urlopen(req) as response:
-                response_body = response.read()
-                data = json.loads(response_body)
-            
-            resources = data.get('resources', [])
-            
-            # Process resources similar to local server (keep existing logic)
-            
-            # Process resources similar to local server
+            # Get Images
+            try:
+                r_img = requests.get(image_url, params=params, auth=auth, timeout=10)
+                if r_img.status_code == 200:
+                    data_img = r_img.json()
+                    all_resources.extend(data_img.get('resources', []))
+                    print(f"Found {len(data_img.get('resources', []))} images")
+                else:
+                    print(f"Error fetching images: {r_img.text}")
+            except Exception as e:
+                print(f"Request Error (Images): {e}")
+
+            # 2. Fetch Videos
+            try:
+                video_url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/video'
+                r_vid = requests.get(video_url, params=params, auth=auth, timeout=10)
+                if r_vid.status_code == 200:
+                    data_vid = r_vid.json()
+                    all_resources.extend(data_vid.get('resources', []))
+                    print(f"Found {len(data_vid.get('resources', []))} videos")
+                else:
+                    print(f"Error fetching videos: {r_vid.text}")
+            except Exception as e:
+                print(f"Request Error (Videos): {e}")
+
+            # Process Resources
             photos = []
-            for resource in resources:
+            for resource in all_resources:
                 context = resource.get('context', {})
-                custom_context = context.get('custom', {})
+                custom_context = context.get('custom', {}) if isinstance(context, dict) else {}
                 
                 uploader_name = custom_context.get('uploaderName', 'Invitado')
                 caption = custom_context.get('caption', '')
                 upload_time = custom_context.get('uploadTime', resource.get('created_at'))
                 
-                # Calculate hour category (UTC to CST)
+                # Hour Logic
                 hour_category = 'all'
                 try:
                     if upload_time:
@@ -98,57 +101,44 @@ class handler(BaseHTTPRequestHandler):
                         hour_category = f'{format_hour(hour)}-{format_hour(next_hour)}'
                 except:
                     pass
-                
-                # Copy existing logic but ensure safe access
-                context = resource.get('context', {}).get('custom', {})
+
                 photos.append({
                     'id': resource.get('public_id'),
                     'url': resource.get('secure_url'),
-                    'width': resource.get('width'),
-                    'height': resource.get('height'),
-                    'format': resource.get('format'),
-                    'uploaderName': context.get('uploader', 'Anónimo'),
-                    'caption': context.get('caption', ''),
-                    'timestamp': resource.get('created_at'),
                     'publicId': resource.get('public_id'),
-                    'resourceType': resource.get('resource_type')
+                    'resourceType': resource.get('resource_type', 'image'),
+                    'uploaderName': uploader_name,
+                    'caption': caption,
+                    'timestamp': resource.get('created_at'),
+                    'hour': hour_category
                 })
-            
+
             response_data = {
                 'photos': photos,
                 'debug_info': {
-                    'version': 'v2-debug',  # FORCE UPDATE
-                    'connected_cloud_name': CLOUD_NAME,
-                    'target_folder': FOLDER,
-                    'search_expression': query_params['expression']
+                    'version': 'v4-requests-production',
+                    'source': 'resources/image+video',
+                    'count': len(photos)
                 }
             }
-            
-            # Send response
+
             self.send_response(200)
-            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
+            # Strong Cache Busting
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
             self.end_headers()
             self.wfile.write(json.dumps(response_data).encode())
-            
+
         except Exception as e:
             import traceback
-            error_details = traceback.format_exc()
-            print(f"Server Error: {str(e)}")
-            
+            traceback.print_exc()
             self.send_response(500)
-            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({
-                'error': str(e),
-                'details': error_details,
-                'config': {
-                    'cloud_name': CLOUD_NAME,
-                    'api_key': API_KEY,
-                    'folder': FOLDER,
-                    'secret_len': len(API_SECRET) if API_SECRET else 0
-                }
-            }).encode())
+            self.wfile.write(json.dumps({'error': str(e)}).encode())
 
     def handle_delete_photo(self):
         try:
@@ -161,37 +151,19 @@ class handler(BaseHTTPRequestHandler):
                 self.send_error(400, "Missing public_id")
                 return
 
-            # Admin API delete using urllib
-            delete_url_base = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/{resource_type}'
+            delete_url = f'https://api.cloudinary.com/v1_1/{CLOUD_NAME}/resources/{resource_type}'
+            params = {'public_ids[]': [public_id]}
+            auth = (API_KEY, API_SECRET)
             
-            from urllib.parse import urlencode, quote
-            # Cloudinary expects repeated keys 'public_ids[]' for array. 
-            # urlencode supports list of tuples or dict with list values if doseq=True
+            r = requests.delete(delete_url, params=params, auth=auth)
             
-            delete_params = {
-                'public_ids[]': public_id
-            }
-            query_string = urlencode(delete_params)
-            full_delete_url = f"{delete_url_base}?{query_string}"
-            
-            import urllib.request
-            import base64
-            
-            req = urllib.request.Request(full_delete_url, method='DELETE')
-            
-            # Auth
-            auth_str = f"{API_KEY}:{API_SECRET}"
-            auth_b64 = base64.b64encode(auth_str.encode()).decode()
-            req.add_header("Authorization", f"Basic {auth_b64}")
-            
-            with urllib.request.urlopen(req) as response:
-                if response.status == 200:
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({'success': True}).encode())
-                else:
-                    raise Exception(f"Delete Failed: {response.status}")
+            if r.status_code == 200:
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': True}).encode())
+            else:
+                self.send_error(500, f"Cloudinary error: {r.text}")
 
         except Exception as e:
             self.send_error(500, str(e))

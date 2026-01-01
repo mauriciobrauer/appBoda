@@ -143,8 +143,19 @@ class WeddingAppHandler(SimpleHTTPRequestHandler):
             # Send response
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.send_header('Pragma', 'no-cache')
             self.end_headers()
-            self.wfile.write(json.dumps({'photos': photos}).encode())
+            
+            response_data = {
+                'photos': photos,
+                'debug_info': {
+                    'version': 'v3-no-cache',
+                    'connected_cloud_name': CLOUD_NAME,
+                    'target_folder': FOLDER
+                }
+            }
+            self.wfile.write(json.dumps(response_data).encode())
             
         except Exception as e:
             print(f'❌ Error getting photos: {e}')
