@@ -22,13 +22,28 @@ const AppState = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎉 Wedding App Initialized');
     loadData();
-    seedDemoMessages(); // Add demo messages if empty
+    // Aggressively seed messages for demo (overwrite if few messages)
+    if (AppState.messages.length < 5) {
+        AppState.messages = []; // Clear small/test data
+        seedDemoMessages();
+    }
+
+    // FETCH PHOTOS IMMEDIATELY
+    loadPhotosFromCloudinary().then(() => {
+        // Refresh view after fetching
+        if (AppState.currentScreen === 'gallery') {
+            const hourFilter = document.getElementById('hourFilter') ? document.getElementById('hourFilter').value : 'all';
+            const nameFilter = document.getElementById('nameFilter') ? document.getElementById('nameFilter').value : 'all';
+            renderGallery(hourFilter, nameFilter);
+        }
+    });
+
     setupEventListeners();
     checkForUpdates();
 });
 
 function seedDemoMessages() {
-    if (AppState.messages.length > 0) return;
+    if (AppState.messages.length > 5) return; // Don't overwrite if many messages exist
 
     const demoMessages = [
         { id: 1, name: 'Tía Rosa', text: '¡Qué boda tan hermosa! Los queremos mucho ❤️', timestamp: new Date(Date.now() - 3600000).toISOString() },
