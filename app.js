@@ -22,9 +22,33 @@ const AppState = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎉 Wedding App Initialized');
     loadData();
+    seedDemoMessages(); // Add demo messages if empty
     setupEventListeners();
     checkForUpdates();
 });
+
+function seedDemoMessages() {
+    if (AppState.messages.length > 0) return;
+
+    const demoMessages = [
+        { id: 1, name: 'Tía Rosa', text: '¡Qué boda tan hermosa! Los queremos mucho ❤️', timestamp: new Date(Date.now() - 3600000).toISOString() },
+        { id: 2, name: 'Primo Juan', text: 'La fiesta está increíble 🎉', timestamp: new Date(Date.now() - 7200000).toISOString() },
+        { id: 3, name: 'Sofía', text: '¡Vivan los novios! 👰🤵', timestamp: new Date(Date.now() - 10800000).toISOString() },
+        { id: 4, name: 'Carlos (Novio)', text: 'Gracias a todos por acompañarnos en este día tan especial', timestamp: new Date(Date.now() - 14400000).toISOString() },
+        { id: 5, name: 'Laura', text: 'Me encanta el vestido 😍', timestamp: new Date(Date.now() - 18000000).toISOString() },
+        { id: 6, name: 'Abuela Tere', text: 'Dios los bendiga siempre mis niños', timestamp: new Date.now() },
+        { id: 7, name: 'Pedro', text: '¡Salud! 🥂', timestamp: new Date(Date.now() - 500000).toISOString() },
+        { id: 8, name: 'Mariana', text: 'La comida estuvo deliciosa 🍽️', timestamp: new Date(Date.now() - 9000000).toISOString() },
+        { id: 9, name: 'Luis', text: 'Gran ambiente! 🕺', timestamp: new Date(Date.now() - 12000000).toISOString() },
+        { id: 10, name: 'Andrea', text: 'Felicidades María y Carlos! 💕', timestamp: new Date(Date.now() - 15000000).toISOString() }
+    ];
+
+    // Add random photo to first message (simulated)
+    demoMessages[0].image = 'couple.png';
+
+    AppState.messages = demoMessages;
+    saveData();
+}
 
 // Navigation
 function navigateTo(screen) {
@@ -721,13 +745,55 @@ async function loadPhotosFromCloudinary() {
 
 // Auto-refresh (check for new content every 30 seconds)
 function checkForUpdates() {
+    // Poll for new content
     setInterval(() => {
         if (AppState.currentScreen === 'gallery') {
-            renderGallery();
-        } else if (AppState.currentScreen === 'messages') {
-            renderMessages();
+            loadPhotosFromCloudinary().then(() => {
+                const hourFilter = document.getElementById('hourFilter') ? document.getElementById('hourFilter').value : 'all';
+                const nameFilter = document.getElementById('nameFilter') ? document.getElementById('nameFilter').value : 'all';
+                renderGallery(hourFilter, nameFilter);
+            });
         }
-    }, 30000);
+    }, 15000); // Check every 15s
+
+    // Check for App Updates (Service Worker)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('✅ Service Worker registered');
+
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // New version available
+                        showUpdateNotification();
+                    }
+                });
+            });
+        }).catch(err => console.log('Service Worker registration failed', err));
+    }
+}
+
+function showUpdateNotification() {
+    const toast = document.createElement('div');
+    toast.className = 'update-toast';
+    toast.style.cssText = `
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: var(--accent-pink); color: white; padding: 15px 25px;
+        border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        z-index: 10000; cursor: pointer; font-weight: bold; animation: slideUp 0.5s ease;
+    `;
+    toast.innerHTML = '🔄 Nueva versión disponible. Pulsa para actualizar.';
+    toast.onclick = () => {
+        // Clear cache and reload
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+            });
+        }
+        window.location.reload(true);
+    };
+    document.body.appendChild(toast);
 }
 
 // Keyboard shortcuts
@@ -736,12 +802,3 @@ document.addEventListener('keydown', (e) => {
         closePhotoModal();
     }
 });
-
-// Service Worker for offline capability (optional)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('✅ Service Worker registered'))
-            .catch(err => console.log('Service Worker registration failed'));
-    });
-}
