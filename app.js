@@ -18,43 +18,6 @@ const AppState = {
     categories: new Set(['all'])
 };
 
-// UI Logger Proxy
-const originalLog = console.log;
-const originalError = console.error;
-
-function uiLog(type, args) {
-    const consoleEl = document.getElementById('debugConsole');
-    if (consoleEl) {
-        // Show console if it has content (remove hidden if you want it auto-popup, keeping it hidden by default for now unless error)
-        if (type === 'error') consoleEl.classList.remove('hidden');
-
-        const line = document.createElement('div');
-        line.className = `debug-log-item ${type === 'error' ? 'debug-error' : ''}`;
-
-        // Convert args to string safely
-        const text = args.map(arg => {
-            if (typeof arg === 'object') return JSON.stringify(arg);
-            return String(arg);
-        }).join(' ');
-
-        const time = new Date().toLocaleTimeString().split(' ')[0];
-        line.textContent = `[${time}] ${text}`;
-
-        consoleEl.appendChild(line);
-        consoleEl.scrollTop = consoleEl.scrollHeight;
-    }
-}
-
-console.log = function (...args) {
-    originalLog.apply(console, args);
-    uiLog('log', args);
-};
-
-console.error = function (...args) {
-    originalError.apply(console, args);
-    uiLog('error', args);
-};
-
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
